@@ -1,0 +1,6 @@
+# python enviroment
+env/
+
+
+# binaries
+.fetch
