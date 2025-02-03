@@ -3,6 +3,9 @@ info:
     title: Receipt Processor
     description: A simple receipt processor
     version: 1.0.0
+servers:
+  - url: http://localhost:8080
+
 paths:
     /receipts/process:
         post:

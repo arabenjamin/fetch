@@ -1,15 +1,15 @@
 package server
 
 import (
-  
-  _"fmt"
-  _"io"
-  _"log"
-  _"crypto/md5"
+	_ "crypto/md5"
 	"encoding/json"
+	_ "fmt"
+	_ "io"
+	_ "log"
 	"net/http"
-  "github.com/google/uuid"
-	_"time"
+	_ "time"
+
+	"github.com/arabenjamin/fetch/app"
 )
 
 /*
@@ -37,76 +37,75 @@ func respond(res http.ResponseWriter, payload map[string]interface{}) {
 }
 
 /*  Submits a receipt for processing */
-func processReciept(resp http.ResponseWriter, req *http.Request){
+func SaveAndProcessReciept(resp http.ResponseWriter, req *http.Request) {
 
+	reciept := app.Reciept{}
+	/* Validate request method */
+	if req.Method != http.MethodPost {
+		http.Error(resp, "Invalid request method", http.StatusMethodNotAllowed)
+	}
 
-    /* Validate request method */
-    if req.Method != http.MethodPost {
-      http.Error(resp, "Invalid request method", http.StatusMethodNotAllowed)
-    }
+	/*Validate Payload */
+	if err := json.NewDecoder(req.Body).Decode(&reciept); err != nil {
+		http.Error(resp, "Invalid request body", http.StatusBadRequest)
+		return
+	}
 
-    /*Validate Payload */
-    var requestData struct {
-			Reciept bool `json:"reciept"`
-		}
-  
-    if err := json.NewDecoder(req.Body).Decode(&requestData); err != nil {
-			http.Error(resp, "Invalid request body", http.StatusBadRequest)
-			return
-		}
+	/*SaveReciept Generates an Id */
+	r, err := app.SaveReciept(reciept)
+	if err != nil {
+		http.Error(resp, "Error saving reciept", http.StatusInternalServerError)
+	}
 
-    /*Generate and Store new ID */
-    id := uuid.New()
-    payload := map[string]interface{}{
-      "id" : id.String()
-    }
+	/* Response payload */
+	payload := map[string]interface{}{
+		"id": r.Id,
+	}
 
-
-    /* Return the new id */
-    respond(resp, payload) 
+	/* Return the new id */
+	respond(resp, payload)
 }
 
-func getRecieptById(resp http.ResponseWriter, req *http.Request){
+func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 
+	/* Validate request method */
+	if req.Method != http.MethodGet {
+		http.Error(resp, "Invalid request method", http.StatusMethodNotAllowed)
+	}
 
-    /* Validate request method */
-    if req.Method != http.MethodGet{
-      http.Error(resp, "Invalid request method", http.StatusMethodNotAllowed)
-    }
+	/*Make sure we have that id*/
+	// TODO: Where do we look up this id ?
 
-    /*Make sure we have that id*/
-    // TODO: Where do we look up this id ?    
+	/* Return the points awarded to given*/
+	payload := map[string]interface{}{
 
-    /* Return the points awarded to given*/
-    paylaod := map[string]interface{
+		"points": 42,
+	}
 
-      "points":42
-    }
-
-    respond(resp, payload)
+	respond(resp, payload)
 }
 
 /* For Testing and Troubleshooting purposes */
-func ping(resp http.ResponseWriter, req *http.Request){
+func ping(resp http.ResponseWriter, req *http.Request) {
 
-    /* Response payload */
-  	resp_payload := map[string]interface{}{
-		  "status":       "ok",
-		  "message":      "pong!",
-	  }
+	/* Response payload */
+	payload := map[string]interface{}{
+		"status":  "ok",
+		"message": "pong!",
+	}
 
-    /* Ping Pong */
-    respod(resp, payload)
+	/* Ping Pong */
+	respond(resp, payload)
 }
 
 func StartServer() error {
-  
-  /*Run our server or return an error */
-  mux := http.NewServeMux()
-  
-  mux.HandleFunc("/ping", ping)   	
-  mux.HandleFunc("/receipts/process", processReciept)
-  mux.HandleFunc("/receipts/{id}/points", getRecieptById)
+
+	/*Run our server or return an error */
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/ping", ping)
+	mux.HandleFunc("/receipts/process", SaveAndProcessReciept)
+	mux.HandleFunc("/receipts/{id}/points", GetRecieptById)
 
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
@@ -115,6 +114,3 @@ func StartServer() error {
 	return nil
 
 }
-
-
-
