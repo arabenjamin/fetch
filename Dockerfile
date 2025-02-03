@@ -8,10 +8,10 @@ COPY go.mod go.sum ./
 # Get Dependancies 
 RUN go mod download
 
-COPY . .
+COPY . /app
 
-RUN go build 
+RUN go build -o /fetch-app
 
 EXPOSE 8080
 
-CMD ["app/fetch"]
+CMD ["/fetch-app"]
