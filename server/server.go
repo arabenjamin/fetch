@@ -5,28 +5,24 @@ import (
 	"fmt"
 	_ "log"
 	"net/http"
-	_ "time"
+	"strconv"
+	"strings"
 
 	"github.com/arabenjamin/fetch/app"
+	"github.com/go-playground/validator/v10"
 )
-
-/*
-func logger(thisLogger *log.Logger) Middleware {
-
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				thisLogger.Println(r.URL.Path, time.Now().Unix())
-			}()
-			next(w, r)
-		}
-	}
-}
-*/
 
 type ErrorResponse struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`
+}
+
+type RecieptResponse struct {
+	Id           string `json:"id,omitempty"`
+	Points       int    `json:"points,omitempty"`
+	Status       string `json:"status,omitempty"`
+	Message      string `json:"messgage,omitempty"`
+	Errormessage string `json:"errormessage,omitempty"`
 }
 
 func HandleError(w http.ResponseWriter, err error, statusCode int) {
@@ -43,7 +39,7 @@ func HandleError(w http.ResponseWriter, err error, statusCode int) {
 	w.Write(resp_json)
 }
 
-func respond(res http.ResponseWriter, payload map[string]interface{}) {
+func respond(res http.ResponseWriter, payload RecieptResponse) {
 
 	resp_json, _ := json.Marshal(payload)
 	res.Header().Set("Content-Type", "application/json")
@@ -59,24 +55,46 @@ func SaveAndProcessReciept(resp http.ResponseWriter, req *http.Request) {
 	/* Validate request method */
 	if req.Method != http.MethodPost {
 		http.Error(resp, "Invalid request method", http.StatusMethodNotAllowed)
+		//HandleError(resp, err, http.StatusNotFound)
+		return
 	}
 
-	/*Validate Payload */
+	content_type := req.Header.Get("Content-Type")
+	if !strings.Contains(content_type, "application/json") {
+		http.Error(resp, "Incorrect content-type", http.StatusBadRequest)
+		return
+	}
+
+	/*Dump it into json */
 	if err := json.NewDecoder(req.Body).Decode(&reciept); err != nil {
 		http.Error(resp, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
+	/*Check to make sure all fields are present*/
+	validate := validator.New()
+	err := validate.Struct(reciept)
+	if err != nil {
+		errors := err.(validator.ValidationErrors)
+		http.Error(resp, fmt.Sprintf("Validation error: %s", errors), http.StatusBadRequest)
+		return
+	}
+
+	/* Check if at least one Item is present*/
+	if len(reciept.Items) < 1 {
+		http.Error(resp, "Invalid request body", http.StatusBadRequest)
+	}
+
 	/*SaveReciept Generates an Id */
 	r, err := app.SaveReciept(reciept)
 	if err != nil {
+
 		http.Error(resp, "Error saving reciept", http.StatusInternalServerError)
 	}
 
 	/* Response payload */
-	payload := map[string]interface{}{
-		"id": r.Id,
-	}
+	var payload RecieptResponse
+	payload.Id = r.Id
 
 	/* Return the new id */
 	resp.WriteHeader(http.StatusCreated)
@@ -91,20 +109,16 @@ func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	/*Make sure we have that id*/
-	// TODO: Where do we look up this id ?
 	id := req.PathValue("id")
-	fmt.Printf("ID: %v\n", id)
-	points, _ := app.GetRecieptByID(id)
-	/*if err != nil {
+	reciept, err := app.GetRecieptByID(id)
+	if err != nil {
 		HandleError(resp, err, http.StatusNotFound)
-		//fmt.Println(err)
-
 		//http.Error(resp, "Reciept not found", http.StatusNotFound)
-	}*/
-	/* Return the points awarded to given*/
-	payload := map[string]interface{}{
-		"points": points,
 	}
+
+	/* Return the points awarded to given*/
+	var payload RecieptResponse
+	payload.Points, _ = strconv.Atoi(reciept.Points)
 
 	respond(resp, payload)
 }
@@ -113,12 +127,11 @@ func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 func ping(resp http.ResponseWriter, req *http.Request) {
 
 	/* Response payload */
-	payload := map[string]interface{}{
-		"status":  "ok",
-		"message": "pong!",
-	}
 
+	var payload RecieptResponse
 	/* Ping Pong */
+	payload.Message = "pong!"
+	payload.Status = "ok"
 	resp.WriteHeader(http.StatusOK)
 	respond(resp, payload)
 }
