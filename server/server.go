@@ -1,10 +1,8 @@
 package server
 
 import (
-	_ "crypto/md5"
 	"encoding/json"
-	_ "fmt"
-	_ "io"
+	"fmt"
 	_ "log"
 	"net/http"
 	_ "time"
@@ -26,12 +24,30 @@ func logger(thisLogger *log.Logger) Middleware {
 }
 */
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
+func HandleError(w http.ResponseWriter, err error, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	errorResponse := ErrorResponse{
+		Message: err.Error(),
+		Code:    statusCode, // Optional
+	}
+
+	//json.NewEncoder(w).Encode(errorResponse)
+	resp_json, _ := json.Marshal(errorResponse)
+	w.Write(resp_json)
+}
+
 func respond(res http.ResponseWriter, payload map[string]interface{}) {
 
 	resp_json, _ := json.Marshal(payload)
 	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Access-Control-Allow-Origin", "*")
-	res.WriteHeader(http.StatusOK)
 	res.Write(resp_json)
 
 }
@@ -63,6 +79,7 @@ func SaveAndProcessReciept(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	/* Return the new id */
+	resp.WriteHeader(http.StatusCreated)
 	respond(resp, payload)
 }
 
@@ -75,11 +92,18 @@ func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 
 	/*Make sure we have that id*/
 	// TODO: Where do we look up this id ?
+	id := req.PathValue("id")
+	fmt.Printf("ID: %v\n", id)
+	points, _ := app.GetRecieptByID(id)
+	/*if err != nil {
+		HandleError(resp, err, http.StatusNotFound)
+		//fmt.Println(err)
 
+		//http.Error(resp, "Reciept not found", http.StatusNotFound)
+	}*/
 	/* Return the points awarded to given*/
 	payload := map[string]interface{}{
-
-		"points": 42,
+		"points": points,
 	}
 
 	respond(resp, payload)
@@ -95,6 +119,7 @@ func ping(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	/* Ping Pong */
+	resp.WriteHeader(http.StatusOK)
 	respond(resp, payload)
 }
 

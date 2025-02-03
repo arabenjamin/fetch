@@ -1,18 +1,18 @@
 package app
 
 import (
-
-	//"fmt"
 	"errors"
+	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 )
 
-var reciepts []Reciept
+var Reciepts []Reciept
 
 type Reciept struct {
 	Id           string
-	Points       int
+	Points       string `json:"points"`
 	Retailer     string `json:"retailer"`
 	PurchaseDate string `json:"purchaseDate"`
 	PurchaseTime string `json:"purchaseTime"`
@@ -21,20 +21,22 @@ type Reciept struct {
 }
 
 type Item struct {
-	shortDesription string
-	price           string
+	ShortDesription string
+	Price           string
 }
 
 func GetRecieptByID(id string) (Reciept, error) {
 
-	/*I need to find the reciept in the reciepts slice*/
+	fmt.Printf("Reciept ID: %v\n", id)
+	log.Printf("Reciept ID: %v\n", id)
+	/*I need to find the reciept in the Reciepts slice*/
 	var r Reciept
 
-	if len(reciepts) == 0 {
-		return r, errors.New("No reciepts found, add recipet first")
+	if len(Reciepts) == 0 {
+		return r, errors.New("No Reciepts found, add reciept first")
 	}
 
-	for _, reciept := range reciepts {
+	for _, reciept := range Reciepts {
 
 		if reciept.Id == id {
 			r = reciept
@@ -42,10 +44,11 @@ func GetRecieptByID(id string) (Reciept, error) {
 
 	}
 
-	if r.Id == "" {
+	/*
+		if r.Id == "" {
 
-		return r, errors.New("Reciept not found by id")
-	}
+			return r, errors.New("Reciept not found by id")
+		}*/
 
 	return r, nil
 
@@ -65,9 +68,9 @@ func SaveReciept(r Reciept) (Reciept, error) {
 
 	/*
 	  I need some non persistant way to save the recipet,
-	  for now I will just add it to the reciepts slice
+	  for now I will just add it to the Reciepts slice
 	*/
-	reciepts = append(reciepts, r)
+	Reciepts = append(Reciepts, r)
 
 	return r, nil
 }
@@ -75,7 +78,7 @@ func SaveReciept(r Reciept) (Reciept, error) {
 func ProcessReciept(r Reciept) (Reciept, error) {
 
 	/*I need to calculate the points for the reciept*/
-	r.Points = 42
+	r.Points = "42"
 
 	return r, nil
 }
