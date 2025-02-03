@@ -3,16 +3,27 @@ package main
 
 import (
 
+  "os"
   "fmt"
-  
-  //_"github.com/arabenjamin/fetch/server/server"
+  "log"
 
-
+  "github.com/arabenjamin/fetch/server"
 )
 
 
 func main(){
 
-  fmt.Printf("Starting receipt processor service ...\n")
+
+  fmt.Printf("Running Fetch App\n")
+
+	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
+	logger.Println("Starting receipt processor service ...")
+
+  
+  err := server.StartServer()
+  if err != nil {
+    logger.Println(err)
+    logger.Print("Holy critical malfunction Batman!")
+  }
 
 }
