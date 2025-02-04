@@ -96,13 +96,14 @@ curl -X 'POST' \
   "total": "6.49"
 }'
 ```
-You would expect to recieve this as a json response
+You would expect to recieve something like this as a json response
 ```
 {
 	"id": "af993bf0-11de-4f59-a6fc-3692ebdb8649"
 }
 ```
 Using that ID returned, you can expect to use it at the endpoint
+
 `http://localhost:8080/receipts/af993bf0-11de-4f59-a6fc-3692ebdb8649/points`
 
 ```
