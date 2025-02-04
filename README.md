@@ -69,7 +69,7 @@ Once the server is running, one should be able to send requests to the server. D
 
 * `/ping GET`
 * `/reciepts/process POST`
-* `/receipts/{id}/points`
+* `/receipts/{id}/points GET`
 
 
 ## Examples
