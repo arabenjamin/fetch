@@ -3,10 +3,11 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	_ "log"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arabenjamin/fetch/app"
 	"github.com/go-playground/validator/v10"
@@ -23,6 +24,11 @@ type RecieptResponse struct {
 	Status       string `json:"status,omitempty"`
 	Message      string `json:"messgage,omitempty"`
 	Errormessage string `json:"errormessage,omitempty"`
+}
+
+func logReq(req *http.Request) {
+	log.Printf("[%v] [%v] [%v] [%v %v] %v\n", time.Now().Unix(), req.RemoteAddr, req.Method, req.Proto, req.URL.Path, req.Header["User-Agent"])
+	/*TODO: return request hashmap */
 }
 
 func HandleError(w http.ResponseWriter, err error, statusCode int) {
@@ -98,6 +104,7 @@ func SaveAndProcessReciept(resp http.ResponseWriter, req *http.Request) {
 
 	/* Return the new id */
 	resp.WriteHeader(http.StatusCreated)
+	logReq(req)
 	respond(resp, payload)
 }
 
@@ -120,6 +127,7 @@ func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 	var payload RecieptResponse
 	payload.Points, _ = strconv.Atoi(reciept.Points)
 
+	logReq(req)
 	respond(resp, payload)
 }
 
@@ -127,12 +135,12 @@ func GetRecieptById(resp http.ResponseWriter, req *http.Request) {
 func ping(resp http.ResponseWriter, req *http.Request) {
 
 	/* Response payload */
-
 	var payload RecieptResponse
 	/* Ping Pong */
 	payload.Message = "pong!"
 	payload.Status = "ok"
 	resp.WriteHeader(http.StatusOK)
+	logReq(req)
 	respond(resp, payload)
 }
 

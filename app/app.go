@@ -61,7 +61,7 @@ func SaveReciept(r Reciept) (Reciept, error) {
 	/*Create a uuid for the id of the reciept*/
 	id := uuid.New().String()
 	r.Id = id
-
+	log.Printf("Saving Reciept With ID: %v\n", id)
 	/*Process the reciept*/
 	r, err := ProcessReciept(r)
 	if err != nil {
@@ -80,7 +80,7 @@ func SaveReciept(r Reciept) (Reciept, error) {
 
 /*calculate the points for the reciept*/
 func ProcessReciept(r Reciept) (Reciept, error) {
-
+	log.Printf("Processing Reciept ID: %v\n", r.Id)
 	points := 0
 
 	//	One point for every alphanumeric character in the retailer name.
