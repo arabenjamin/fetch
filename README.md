@@ -39,7 +39,11 @@ Install Golang depandancies
 
 Run it 
 
-`go run` 
+`go run main.go` 
+
+or call th binary 
+
+`./fetch`
 
 
 The server should start running on port :8080
